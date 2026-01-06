@@ -1,65 +1,110 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useRef, useEffect, useCallback } from "react";
+import CarPane from "./components/CarPane";
+import MapPane from "./components/MapPane";
+import ToolbarPane from "./components/ToolbarPane";
 
 export default function Home() {
+  const [carPaneWidth, setCarPaneWidth] = useState(40); // percentage
+  const [isDragging, setIsDragging] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const containerRef = useRef(null);
+  const dragStartX = useRef(0);
+  const dragStartWidth = useRef(0);
+
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    dragStartX.current = e.clientX;
+    dragStartWidth.current = carPaneWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isDragging || !containerRef.current) return;
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const deltaX = e.clientX - dragStartX.current;
+    const containerWidth = containerRect.width;
+    const deltaPercent = (deltaX / containerWidth) * 100;
+    const newWidth = Math.max(40, Math.min(100, dragStartWidth.current + deltaPercent));
+
+    setCarPaneWidth(newWidth);
+  }, [isDragging]);
+
+  const handleMouseUp = useCallback(() => {
+    if (!isDragging) return;
+
+    setIsDragging(false);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+
+    // Snap to 40% or 100%
+    const snappedWidth = carPaneWidth > 70 ? 100 : 40;
+
+    if (snappedWidth === 100) {
+      setIsTransitioning(true);
+      // Clear transitioning state after animation completes
+      setTimeout(() => setIsTransitioning(false), 300);
+    }
+
+    setCarPaneWidth(snappedWidth);
+  }, [isDragging, carPaneWidth]);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="h-screen flex flex-col bg-black">
+      {/* Top section with car and map panes - 90% height */}
+      <div ref={containerRef} className="flex h-[90%] relative">
+        {/* Car pane - dynamic width */}
+        <div
+          style={{
+            width: carPaneWidth === 100 ? '100%' : `${carPaneWidth}%`,
+            transition: isDragging ? 'none' : 'width 0.3s ease-in-out'
+          }}
+        >
+          <CarPane />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* Resize handle - always positioned at right edge of car pane */}
+        <div
+          className="absolute top-1/2 transform -translate-y-1/2 w-2 h-8 bg-zinc-600 hover:bg-zinc-400 cursor-col-resize transition-colors rounded-sm z-10"
+          style={{
+            left: `calc(${carPaneWidth}% - 15px)`,
+            transition: isDragging ? 'none' : 'left 0.3s ease-in-out'
+          }}
+          onMouseDown={handleMouseDown}
+        ></div>
+
+        {/* Map pane - show when car pane is not at 100% or during transition */}
+        {(carPaneWidth < 100 || isTransitioning) && (
+          <div
+            style={{
+              width: `${100 - carPaneWidth}%`,
+              transition: isDragging ? 'none' : 'width 0.3s ease-in-out'
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            <MapPane />
+          </div>
+        )}
+      </div>
+
+      {/* Toolbar pane - 10% height, 100% width */}
+      <div className="h-[10%]">
+        <ToolbarPane />
+      </div>
     </div>
   );
 }
