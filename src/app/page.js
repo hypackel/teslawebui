@@ -4,12 +4,16 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import CarPane from "./components/CarPane";
 import MapPane from "./components/MapPane";
 import ToolbarPane from "./components/ToolbarPane";
+import AppDrawer from "./components/AppDrawer";
 
 export default function Home() {
   const [carPaneWidth, setCarPaneWidth] = useState(40); // percentage
   const [isDragging, setIsDragging] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const containerRef = useRef(null);
+  const drawerRef = useRef(null);
+  const toolbarButtonRef = useRef(null);
   const dragStartX = useRef(0);
   const dragStartWidth = useRef(0);
 
@@ -64,10 +68,32 @@ export default function Home() {
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        isDrawerOpen &&
+        drawerRef.current &&
+        !drawerRef.current.contains(event.target) &&
+        toolbarButtonRef.current &&
+        !toolbarButtonRef.current.contains(event.target)
+      ) {
+        setIsDrawerOpen(false);
+      }
+    };
+
+    if (isDrawerOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDrawerOpen]);
+
   return (
     <div className="h-screen flex flex-col bg-black">
-      {/* Top section with car and map panes - 90% height */}
-      <div ref={containerRef} className="flex h-[90%] relative">
+      {/* Top section with car and map panes - 93% height */}
+      <div ref={containerRef} className="flex h-[92%] relative overflow-hidden">
         {/* Car pane - dynamic width */}
         <div
           style={{
@@ -99,11 +125,18 @@ export default function Home() {
             <MapPane />
           </div>
         )}
+
+        {/* App Drawer - slides up from bottom */}
+        <AppDrawer isOpen={isDrawerOpen} drawerRef={drawerRef} />
       </div>
 
       {/* Toolbar pane - 10% height, 100% width */}
-      <div className="h-[10%]">
-        <ToolbarPane />
+      <div className="h-[8%]">
+        <ToolbarPane 
+          onToggleDrawer={() => setIsDrawerOpen(!isDrawerOpen)} 
+          isDrawerOpen={isDrawerOpen}
+          toolbarButtonRef={toolbarButtonRef}
+        />
       </div>
     </div>
   );
