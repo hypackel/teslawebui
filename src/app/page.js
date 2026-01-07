@@ -5,15 +5,20 @@ import CarPane from "./components/CarPane";
 import MapPane from "./components/MapPane";
 import ToolbarPane from "./components/ToolbarPane";
 import AppDrawer from "./components/AppDrawer";
+import AirCon from "./components/AirCon";
 
 export default function Home() {
   const [carPaneWidth, setCarPaneWidth] = useState(40); // percentage
   const [isDragging, setIsDragging] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isAirConOpen, setIsAirConOpen] = useState(false);
   const containerRef = useRef(null);
   const drawerRef = useRef(null);
+  const airConRef = useRef(null);
   const toolbarButtonRef = useRef(null);
+  const climateButtonRef1 = useRef(null);
+  const climateButtonRef2 = useRef(null);
   const dragStartX = useRef(0);
   const dragStartWidth = useRef(0);
 
@@ -90,6 +95,31 @@ export default function Home() {
     };
   }, [isDrawerOpen]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const isClickInClimateSection = 
+        (climateButtonRef1.current && climateButtonRef1.current.contains(event.target)) ||
+        (climateButtonRef2.current && climateButtonRef2.current.contains(event.target));
+      
+      if (
+        isAirConOpen &&
+        airConRef.current &&
+        !airConRef.current.contains(event.target) &&
+        !isClickInClimateSection
+      ) {
+        setIsAirConOpen(false);
+      }
+    };
+
+    if (isAirConOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isAirConOpen]);
+
   return (
     <div className="h-screen flex flex-col bg-black">
       {/* Top section with car and map panes - 93% height */}
@@ -128,6 +158,9 @@ export default function Home() {
 
         {/* App Drawer - slides up from bottom */}
         <AppDrawer isOpen={isDrawerOpen} drawerRef={drawerRef} />
+        
+        {/* AirCon - slides up from bottom */}
+        <AirCon isOpen={isAirConOpen} airConRef={airConRef} />
       </div>
 
       {/* Toolbar pane - 10% height, 100% width */}
@@ -136,6 +169,9 @@ export default function Home() {
           onToggleDrawer={() => setIsDrawerOpen(!isDrawerOpen)} 
           isDrawerOpen={isDrawerOpen}
           toolbarButtonRef={toolbarButtonRef}
+          onToggleAirCon={() => setIsAirConOpen(!isAirConOpen)}
+          climateButtonRef1={climateButtonRef1}
+          climateButtonRef2={climateButtonRef2}
         />
       </div>
     </div>

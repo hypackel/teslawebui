@@ -9,7 +9,7 @@ import {
 } from "react-icons/fa";
 import { BsThreeDots, BsX } from "react-icons/bs";
 
-export default function ToolbarPane({ onToggleDrawer, isDrawerOpen, toolbarButtonRef }) {
+export default function ToolbarPane({ onToggleDrawer, isDrawerOpen, toolbarButtonRef, onToggleAirCon, climateButtonRef1, climateButtonRef2 }) {
   return (
     <div className="bg-black h-full flex items-center justify-between px-4">
       {/* Left section */}
@@ -18,9 +18,14 @@ export default function ToolbarPane({ onToggleDrawer, isDrawerOpen, toolbarButto
       </div>
 
       {/* climate section 1 */}
-      <div className="flex items-center space-x-6">
+      <div ref={climateButtonRef1} className="flex items-center space-x-6">
         <FaChevronLeft className="text-zinc-700 text-xs" />
-        <span className="text-zinc-400 text-[1.75rem] font-extralight">60</span>
+        <span 
+          className="text-zinc-400 text-[1.75rem] font-extralight cursor-pointer"
+          onClick={onToggleAirCon}
+        >
+          60
+        </span>
         <FaChevronRight className="text-zinc-700 text-xs" />
       </div>
 
@@ -45,9 +50,14 @@ export default function ToolbarPane({ onToggleDrawer, isDrawerOpen, toolbarButto
       </div>
 
       {/* climate section 2 */}
-      <div className="flex items-center space-x-6">
+      <div ref={climateButtonRef2} className="flex items-center space-x-6">
         <FaChevronLeft className="text-zinc-700 text-xs" />
-        <span className="text-zinc-400 font-extralight text-[1.75rem] ">60</span>
+        <span 
+          className="text-zinc-400 font-extralight text-[1.75rem] cursor-pointer"
+          onClick={onToggleAirCon}
+        >
+          60
+        </span>
         <FaChevronRight className="text-zinc-700 text-xs" />
       </div>
 
